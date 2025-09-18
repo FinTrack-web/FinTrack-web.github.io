@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Shark Tracker</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            transition: background-color 0.5s ease;
+            overflow-x: hidden;
+        }
+        .title-font {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .ocean-gradient {
+            background: linear-gradient(to bottom, #0077be, #005689, #003366, #001a33, #000000);
+        }
+        .faq-card {
+            backdrop-filter: blur(10px);
+            background: rgba(0, 55, 102, 0.7);
+            border: 1px solid rgba(0, 190, 255, 0.3);
+        }
+        .nav-link {
+            position: relative;
+        }
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #00b4ff;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover:after {
+            width: 100%;
+        }
+        .depth-indicator {
+            height: 5px;
+            background: linear-gradient(to right, #0077be, #005689, #003366, #001a33, #000000);
+        }
+        .faq-item {
+            transition: all 0.3s ease;
+        }
+        .faq-item.active {
+            background: rgba(0, 86, 137, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen ocean-gradient text-white">
+    <div id="vanta-bg"></div>
+    
+    <!-- Navigation -->
+    <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="text-2xl font-bold title-font flex items-center">
+            <i data-feather="map" class="mr-2"></i>
+            Shark<span class="text-blue-300">Tracker</span>
+        </div>
+        <div class="hidden md:flex space-x-8">
+            <a href="index.html" class="nav-link">Home</a>
+            <a href="about.html" class="nav-link">About</a>
+            <a href="faq.html" class="nav-link text-blue-300">FAQ</a>
+            <a href="contact.html" class="nav-link">Contact</a>
+        </div>
+        <button class="md:hidden">
+            <i data-feather="menu"></i>
+        </button>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="container mx-auto px-6 py-16 text-center" data-aos="fade-up">
+        <h1 class="text-4xl md:text-6xl font-bold title-font mb-6">Frequently Asked <span class="text-blue-300">Questions</span></h1>
+        <p class="text-xl md:text-2xl mb-10 max-w-3xl mx-auto">Find answers to common questions about shark tracking and our platform.</p>
+    </section>
+
+    <!-- Depth Indicator -->
+    <div class="depth-indicator w-full"></div>
+
+    <!-- FAQ Content -->
+    <section class="container mx-auto px-6 py-16 max-w-4xl">
+        <div class="space-y-4">
+            <div class="faq-card p-6 rounded-xl faq-item" data-aos="fade-up">
+                <div class="flex justify-between items-center cursor-pointer">
+                    <h3 class="text-xl font-semibold title-font">How accurate is the shark tracking data?</h3>
+                    <i data-feather="chevron-down" class="faq-arrow transition-transform duration-300"></i>
+                </div>
+                <div class="faq-answer mt-4 hidden">
+                    <p>Our tracking data is highly accurate, with most tags providing location data within 100-200 meters. The accuracy depends on several factors including satellite coverage, weather conditions, and whether the shark is at the surface (where GPS signals are strongest). We use advanced algorithms to filter and refine the raw data to provide the most precise locations possible.</p>
+                </div>
+            </div>
+
+            <div class="faq-card p-6 rounded-xl faq-item" data-aos="fade-up">
+                <div class="flex justify-between items-center cursor-pointer">
+                    <h3 class="text-xl font-semibold title-font">How often is the tracking data updated?</h3>
+                    <i data-feather="chevron-down" class="faq-arrow transition-transform duration-300"></i>
+                </div>
+                <div class="faq-answer mt-4 hidden">
+                    <p>Update frequency varies depending on the tag type and the shark's behavior. Most of our satellite tags transmit data every time the shark surfaces, which can range from multiple times per day to once every few days. Our system processes and displays new data as soon as it's received from the satellites.</p>
+                </div>
+            </div>
+
+            <div class="faq-card p-6 rounded-xl faq-item" data-aos="fade-up">
+                <div class="flex justify-between items-center cursor-pointer">
+                    <h3 class="text-xl font-semibold title-font">Does tagging harm the sharks?</h3>
+                    <i data-feather="chevron-down" class="faq-arrow transition-transform duration-300"></i>
+                </div>
+                <div class="faq-answer mt-4 hidden">
+                    <p>All our tagging procedures follow strict ethical guidelines and are conducted by trained professionals. The tags are designed to minimize impact, and most are programmed to detach after a set period (typically 6-12 months). Research shows that properly attached tags don't affect sharks' behavior, feeding, or migration patterns in the long term.</p>
+                </div>
+            </div>
+
+            <div class="faq-card p-6 rounded-xl faq-item" data-aos="fade-up">
+                <div class="flex justify-between items-center cursor-pointer">
+                    <h3 class="text-xl font-semibold title-font">Can I adopt or sponsor a shark?</h3>
+                    <i data-feather="chevron-down" class="faq-arrow transition-transform duration-300"></i>
+                </div>
+                <div class="faq-answer mt-4 hidden">
+                    <p>Yes! Our Shark Sponsorship program allows individuals and organizations to support the tracking and conservation of specific sharks. Sponsors receive regular updates about their shark's movements, photos when available, and a certificate of sponsorship. Funds go directly toward tag maintenance, data analysis, and conservation efforts.</p>
+                </div>
+            </div>
+
+            <div class="faq-card p-6 rounded-xl faq-item" data-aos="fade-up">
+                <div class="flex justify-between items-center cursor-pointer">
+                    <h3 class="text-xl font-semibold title-font">How can I contribute to shark conservation?</h3>
+                    <i data-feather="chevron-down" class="faq-arrow transition-transform duration-300"></i>
+                </div>
+                <div class="faq-answer mt-4 hidden">
+                    <p>There are many ways to help: sponsor a shark through our program, donate to conservation organizations, reduce your seafood consumption or choose sustainable options, participate in beach cleanups, educate others about sharks, and support policies that protect marine ecosystems. Every action counts toward preserving these vital ocean predators.</p>
+                </div>
+            </div>
+
+            <div class="faq-card p-6 rounded-xl faq-item" data-aos="fade-up">
+                <div class="flex justify-between items-center cursor-pointer">
+                    <h3 class="text-xl font-semibold title-font">Why do some sharks disappear from tracking?</h3>
+                    <i data-feather="chevron-down" class="faq-arrow transition-transform duration-300"></i>
+                </div>
+                <div class="faq-answer mt-4 hidden">
+                    <p>There are several reasons a shark might stop transmitting: the tag's battery may have died, the tag detached as programmed, the shark may be in an area with poor satellite coverage, or in rare cases, the shark may have died. We make every effort to recover tags when possible to download any remaining data.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black bg-opacity-50 py-12">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between">
+                <div class="mb-8 md:mb-0">
+                    <div class="text-2xl font-bold title-font flex items-center mb-4">
+                        <i data-feather="map" class="mr-2"></i>
+                        Shark<span class="text-blue-300">Tracker</span>
+                    </div>
+                    <p class="max-w-xs">Exploring the depths of shark habitats to promote conservation and education.</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-8">
+                    <div>
+                        <h4 class="font-semibold text-lg mb-4 title-font">Explore</h4>
+                        <ul class="space-y-2">
+                            <li><a href="index.html" class="hover:text-blue-300">Home</a></li>
+                            <li><a href="about.html" class="hover:text-blue-300">About</a></li>
+                            <li><a href="faq.html" class="hover:text-blue-300">FAQ</a></li>
+                            <li><a href="contact.html" class="hover:text-blue-300">Contact</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-lg mb-4 title-font">Resources</h4>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="hover:text-blue-300">Research Papers</a></li>
+                            <li><a href="#" class="hover:text-blue-300">Conservation</a></li>
+                            <li><a href="#" class="hover:text-blue-300">Education</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-lg mb-4 title-font">Connect</h4>
+                        <div class="flex space-x-4">
+                            <a href="#" class="hover:text-blue-300"><i data-feather="twitter"></i></a>
+                            <a href="#" class="hover:text-blue-300"><i data-feather="facebook"></i></a>
+                            <a href="#" class="hover:text-blue-300"><i data-feather="instagram"></i></a>
+                            <a href="#" class="hover:text-blue-300"><i data-feather="youtube"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center">
+                <p>&copy; 2025 SharkTracker. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Vanta.js background
+        VANTA.NET({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x0077be,
+            backgroundColor: 0x001a33,
+            points: 12.00,
+            maxDistance: 22.00,
+            spacing: 18.00
+        });
+
+        // Depth effect on scroll
+        window.addEventListener('scroll', function() {
+            const scrollPosition = window.scrollY;
+            const maxScroll = document.body.scrollHeight - window.innerHeight;
+            const scrollPercentage = scrollPosition / maxScroll;
+            
+            const colors = [
+                {r: 0, g: 119, b: 190},
+                {r: 0, g: 86, b: 137},
+                {r: 0, g: 51, b: 102},
+                {r: 0, g: 26, b: 51},
+                {r: 0, g: 0, b: 0}
+            ];
+            
+            const colorIndex = Math.min(Math.floor(scrollPercentage * (colors.length - 1)), colors.length - 2);
+            const colorPercentage = (scrollPercentage * (colors.length - 1)) % 1;
+            
+            const r = Math.round(colors[colorIndex].r + (colors[colorIndex + 1].r - colors[colorIndex].r) * colorPercentage);
+            const g = Math.round(colors[colorIndex].g + (colors[colorIndex + 1].g - colors[colorIndex].g) * colorPercentage);
+            const b = Math.round(colors[colorIndex].b + (colors[colorIndex + 1].b - colors[colorIndex].b) * colorPercentage);
+            
+            document.body.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+        });
+
+        // FAQ toggle functionality
+        document.querySelectorAll('.faq-item').forEach(item => {
+            const header = item.querySelector('.cursor-pointer');
+            const answer = item.querySelector('.faq-answer');
+            const arrow = item.querySelector('.faq-arrow');
+            
+            header.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                
+                // Close all other FAQs
+                document.querySelectorAll('.faq-item').forEach(faq => {
+                    if (faq !== item) {
+                        faq.classList.remove('active');
+                        faq.querySelector('.faq-answer').classList.add('hidden');
+                        faq.querySelector('.faq-arrow').classList.remove('rotate-180');
+                    }
+                });
+                
+                // Toggle current FAQ
+                if (isActive) {
+                    item.classList.remove('active');
+                    answer.classList.add('hidden');
+                    arrow.classList.remove('rotate-180');
+                } else {
+                    item.classList.add('active');
+                    answer.classList.remove('hidden');
+                    arrow.classList.add('rotate-180');
+                }
+            });
+        });
+
+        // Initialize AOS and Feather Icons
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+        feather.replace();
+    </script>
+</body>
+</html>

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shark Tracker</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        #maximize-map i {
+            width: 20px;
+            height: 20px;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            transition: background-color 0.5s ease;
+            overflow-x: hidden;
+        }
+        .title-font {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .ocean-gradient {
+            background: linear-gradient(to bottom, #0077be, #005689, #003366, #001a33, #000000);
+        }
+        .map-container {
+            height: 70vh;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 119, 190, 0.3);
+        }
+        .species-card {
+            backdrop-filter: blur(10px);
+            background: rgba(0, 55, 102, 0.7);
+            border: 1px solid rgba(0, 190, 255, 0.3);
+        }
+        .search-bar {
+            backdrop-filter: blur(10px);
+            background: rgba(0, 55, 102, 0.7);
+        }
+        .nav-link {
+            position: relative;
+        }
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #00b4ff;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover:after {
+            width: 100%;
+        }
+        .depth-indicator {
+            height: 5px;
+            background: linear-gradient(to right, #0077be, #005689, #003366, #001a33, #000000);
+        }
+    </style>
+</head>
+<body class="min-h-screen ocean-gradient text-white">
+    <div id="vanta-bg"></div>
+    
+    <!-- Navigation -->
+    <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="text-2xl font-bold title-font flex items-center">
+            <i data-feather="map" class="mr-2"></i>
+            Shark<span class="text-blue-300">Tracker</span>
+        </div>
+        <div class="hidden md:flex space-x-8">
+            <a href="index.html" class="nav-link">Home</a>
+            <a href="about.html" class="nav-link">About</a>
+            <a href="faq.html" class="nav-link">FAQ</a>
+            <a href="contact.html" class="nav-link">Contact</a>
+        </div>
+        <button class="md:hidden">
+            <i data-feather="menu"></i>
+        </button>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="container mx-auto px-6 py-16 text-center" data-aos="fade-up">
+        <h1 class="text-4xl md:text-6xl font-bold title-font mb-6">Track Sharks in <span class="text-blue-300">Real-Time</span></h1>
+        <p class="text-xl md:text-2xl mb-10 max-w-3xl mx-auto">Explore the mysterious world of sharks with our advanced tracking system. Dive deeper to discover more.</p>
+        <div class="flex justify-center">
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 mr-4">
+                Explore Map
+            </button>
+            <button class="border border-blue-400 hover:bg-blue-900 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105">
+                Learn More
+            </button>
+        </div>
+    </section>
+
+    <!-- Depth Indicator -->
+    <div class="depth-indicator w-full"></div>
+
+    <!-- Map Section -->
+    <section class="container mx-auto px-6 py-16" data-aos="fade-up">
+        <div class="flex flex-col md:flex-row gap-8">
+            <!-- Search and Legend -->
+            <div class="w-full md:w-1/4 space-y-6">
+                <div class="search-bar p-6 rounded-xl">
+                    <h3 class="text-xl font-semibold mb-4 title-font">Search Species</h3>
+                    <div class="relative">
+                        <input type="text" placeholder="Search shark species..." class="w-full bg-gray-800 bg-opacity-50 border border-blue-400 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <i data-feather="search" class="absolute right-3 top-2.5 text-blue-300"></i>
+                    </div>
+                </div>
+
+                <div class="species-card p-6 rounded-xl">
+                    <h3 class="text-xl font-semibold mb-4 title-font">Species Legend</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 rounded-full bg-red-500 mr-3"></div>
+                            <span>Great White</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 rounded-full bg-blue-500 mr-3"></div>
+                            <span>Hammerhead</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 rounded-full bg-green-500 mr-3"></div>
+                            <span>Tiger Shark</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 rounded-full bg-yellow-500 mr-3"></div>
+                            <span>Whale Shark</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 rounded-full bg-purple-500 mr-3"></div>
+                            <span>Bull Shark</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div class="w-full md:w-3/4 relative">
+                <div class="map-container relative">
+                    <div id="map" class="absolute inset-0"></div>
+                    <button id="maximize-map" class="absolute top-4 right-4 z-10 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-all duration-300">
+                        <i data-feather="maximize-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="container mx-auto px-6 py-16" data-aos="fade-up">
+        <h2 class="text-3xl font-bold text-center title-font mb-16">Advanced Tracking Features</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="species-card p-8 rounded-xl text-center">
+                <div class="w-16 h-16 mx-auto bg-blue-900 rounded-full flex items-center justify-center mb-4">
+                    <i data-feather="map-pin" class="w-8 h-8 text-blue-300"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3 title-font">Real-Time Tracking</h3>
+                <p>Follow sharks as they move through the oceans with our live tracking technology.</p>
+            </div>
+            <div class="species-card p-8 rounded-xl text-center">
+                <div class="w-16 h-16 mx-auto bg-blue-900 rounded-full flex items-center justify-center mb-4">
+                    <i data-feather="activity" class="w-8 h-8 text-blue-300"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3 title-font">Migration Patterns</h3>
+                <p>Analyze historical data to understand shark migration routes and behaviors.</p>
+            </div>
+            <div class="species-card p-8 rounded-xl text-center">
+                <div class="w-16 h-16 mx-auto bg-blue-900 rounded-full flex items-center justify-center mb-4">
+                    <i data-feather="alert-triangle" class="w-8 h-8 text-blue-300"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3 title-font">Conservation Alerts</h3>
+                <p>Receive notifications about sharks in protected areas or potential danger zones.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black bg-opacity-50 py-12">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between">
+                <div class="mb-8 md:mb-0">
+                    <div class="text-2xl font-bold title-font flex items-center mb-4">
+                        <i data-feather="map" class="mr-2"></i>
+                        Shark<span class="text-blue-300">Tracker</span>
+                    </div>
+                    <p class="max-w-xs">Exploring the depths of shark habitats to promote conservation and education.</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-8">
+                    <div>
+                        <h4 class="font-semibold text-lg mb-4 title-font">Explore</h4>
+                        <ul class="space-y-2">
+                            <li><a href="index.html" class="hover:text-blue-300">Home</a></li>
+                            <li><a href="about.html" class="hover:text-blue-300">About</a></li>
+                            <li><a href="faq.html" class="hover:text-blue-300">FAQ</a></li>
+                            <li><a href="contact.html" class="hover:text-blue-300">Contact</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-lg mb-4 title-font">Resources</h4>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="hover:text-blue-300">Research Papers</a></li>
+                            <li><a href="#" class="hover:text-blue-300">Conservation</a></li>
+                            <li><a href="#" class="hover:text-blue-300">Education</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-lg mb-4 title-font">Connect</h4>
+                        <div class="flex space-x-4">
+                            <a href="#" class="hover:text-blue-300"><i data-feather="twitter"></i></a>
+                            <a href="#" class="hover:text-blue-300"><i data-feather="facebook"></i></a>
+                            <a href="#" class="hover:text-blue-300"><i data-feather="instagram"></i></a>
+                            <a href="#" class="hover:text-blue-300"><i data-feather="youtube"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center">
+                <p>&copy; 2025 SharkTracker. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.fog.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+    <script>
+        // Initialize the map
+        const map = L.map('map').setView([20, 0], 2);
+
+        // Add ocean basemap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Sample shark data in ocean locations only
+        const sharks = [
+            {name: "Great White", lat: -40.9006, lng: -100.0000, color: "red"},
+            {name: "Hammerhead", lat: 0, lng: -150.0000, color: "blue"},
+            {name: "Tiger Shark", lat: -20.0000, lng: 80.0000, color: "green"},
+            {name: "Whale Shark", lat: 10.0000, lng: 120.0000, color: "yellow"},
+            {name: "Bull Shark", lat: -30.0000, lng: -30.0000, color: "purple"}
+        ];
+
+        // Add shark heat clouds
+        sharks.forEach(shark => {
+            const cloud = L.circle([shark.lat, shark.lng], {
+                radius: 500000, // 500km radius
+                fillColor: shark.color,
+                color: shark.color,
+                weight: 0,
+                fillOpacity: 0.4,
+                className: `shark-cloud ${shark.name.toLowerCase().replace(' ', '-')}`
+            }).addTo(map);
+
+            // Add pulsing effect
+            setInterval(() => {
+                const currentRadius = cloud.getRadius();
+                const newRadius = currentRadius > 600000 ? 400000 : currentRadius + 10000;
+                cloud.setRadius(newRadius);
+            }, 100);
+
+            cloud.bindPopup(`<b>${shark.name}</b><br>Last seen: Just now<br>Approx. 100km radius`);
+        });
+
+        // Add ocean current visualization
+        // Search functionality
+        document.querySelector('input[type="text"]').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            sharks.forEach(shark => {
+                const cloud = document.querySelector(`.shark-cloud.${shark.name.toLowerCase().replace(' ', '-')}`);
+                if (cloud) {
+                    if (searchTerm === '' || shark.name.toLowerCase().includes(searchTerm)) {
+                        cloud.style.opacity = '1';
+                    } else {
+                        cloud.style.opacity = '0';
+                    }
+                }
+            });
+        });
+
+        // Initialize Vanta.js background with ocean effect
+        VANTA.WAVES({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x005689,
+            shininess: 35.00,
+            waveHeight: 15.00,
+            waveSpeed: 0.75,
+            zoom: 0.85,
+            waveSpeed: 0.5,
+            waveCount: 3
+        });
+
+        // Add underwater particles effect
+        const particles = [];
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.width = `${Math.random() * 5 + 2}px`;
+            particle.style.height = particle.style.width;
+            particle.style.backgroundColor = `rgba(0, 180, 255, ${Math.random() * 0.3 + 0.1})`;
+            particle.style.position = 'absolute';
+            particle.style.borderRadius = '50%';
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 100}%`;
+            document.body.appendChild(particle);
+            particles.push({
+                el: particle,
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                speed: Math.random() * 0.5 + 0.2
+            });
+        }
+
+        // Animate particles
+        function animateParticles() {
+            particles.forEach(p => {
+                p.y += p.speed;
+                if (p.y > window.innerHeight) {
+                    p.y = -10;
+                    p.x = Math.random() * window.innerWidth;
+                }
+                p.el.style.transform = `translate(${p.x}px, ${p.y}px)`;
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // Add CSS for particles
+        const style = document.createElement('style');
+        style.textContent = `
+            .particle {
+                will-change: transform;
+                pointer-events: none;
+            }
+            .shark-cloud {
+                transition: opacity 0.5s ease;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Ocean depth effect on scroll
+        window.addEventListener('scroll', function() {
+            const scrollPosition = window.scrollY;
+            const maxScroll = document.body.scrollHeight - window.innerHeight;
+            const scrollPercentage = scrollPosition / maxScroll;
+            
+            // Calculate background color based on scroll position
+            const colors = [
+                {r: 0, g: 119, b: 190},    // #0077be
+                {r: 0, g: 86, b: 137},     // #005689
+                {r: 0, g: 51, b: 102},     // #003366
+                {r: 0, g: 26, b: 51},      // #001a33
+                {r: 0, g: 0, b: 0}         // #000000
+            ];
+            
+            const colorIndex = Math.min(Math.floor(scrollPercentage * (colors.length - 1)), colors.length - 2);
+            const colorPercentage = (scrollPercentage * (colors.length - 1)) % 1;
+            
+            const r = Math.round(colors[colorIndex].r + (colors[colorIndex + 1].r - colors[colorIndex].r) * colorPercentage);
+            const g = Math.round(colors[colorIndex].g + (colors[colorIndex + 1].g - colors[colorIndex].g) * colorPercentage);
+            const b = Math.round(colors[colorIndex].b + (colors[colorIndex + 1].b - colors[colorIndex].b) * colorPercentage);
+            
+            document.body.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+        });
+
+        // Map maximize functionality
+        document.getElementById('maximize-map').addEventListener('click', function() {
+            const mapContainer = document.querySelector('.map-container');
+            const isMaximized = mapContainer.classList.contains('fixed');
+            
+            if (isMaximized) {
+                mapContainer.classList.remove('fixed', 'inset-0', 'z-50', 'w-screen', 'h-screen');
+                mapContainer.classList.add('relative');
+                document.body.style.overflow = 'auto';
+                this.innerHTML = '<i data-feather="maximize-2"></i>';
+            } else {
+                mapContainer.classList.remove('relative');
+                mapContainer.classList.add('fixed', 'inset-0', 'z-50', 'w-screen', 'h-screen');
+                document.body.style.overflow = 'hidden';
+                this.innerHTML = '<i data-feather="minimize-2"></i>';
+            }
+            
+            map.invalidateSize();
+            feather.replace();
+        });
+
+        // Initialize AOS and Feather Icons
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+        feather.replace();
+    </script>
+</body>
+</html>
