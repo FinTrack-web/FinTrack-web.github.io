@@ -51,28 +51,45 @@
             height: 500px;
             border-radius: 1rem;
         }
-        /* Style for the custom red "Eating" marker */
-        .eating-marker {
-            background-color: #ef4444; /* red-500 */
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 3px solid white;
-            box-shadow: 0 0 10px #ef4444;
-            animation: pulse 1.5s infinite;
+        /* Switch button styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
         }
-        @keyframes pulse {
-            0% { transform: scale(0.8); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 1; }
-            100% { transform: scale(0.8); opacity: 0.8; }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
         }
-        .live-marker {
-            background-color: #3b82f6; /* blue-500 */
-            width: 14px;
-            height: 14px;
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
             border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 0 5px #3b82f6;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
         }
     </style>
 </head>
@@ -151,9 +168,8 @@
                     </div>
                 </div>
                 <button id="track-shark-btn" class="mt-4 w-full px-6 py-3 text-lg font-bold rounded-lg shadow-lg bg-blue-600 hover:bg-blue-700 transition-colors duration-300">
-                    Zoom to Shark
+                    Track Shark
                 </button>
-                <p id="data-status" class="text-xs text-center mt-2 text-gray-400">Data status: Initializing...</p>
             </div>
 
             <div class="col-span-2 map-card p-4">
@@ -180,243 +196,6 @@
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
-        // =========================================================================
-        // ⚠️ DATA CONNECTION CONFIGURATION (CRITICAL)
-        // You MUST update this variable with the direct, raw URL to your CSV file
-        // in the GitHub repository where the Apps Script is saving data.
-        // E.g., https://raw.githubusercontent.com/YourUser/YourRepo/main/data/tracker_log.csv
-        // =========================================================================
-        const MONOUFYA_SHARK_ID = 'monoufya';
-        // 📌 Replace the URL below with your actual RAW CSV file URL
-        const RAW_GITHUB_URL = "https://raw.githubusercontent.com/FIntrack-web/FIntrack-data/main/data/tracker_log.csv";
-        const INITIAL_VIEW = [30.57, 31.00]; // Center map near Monoufya, Egypt
-        
-        // Data storage for the live points
-        let monoufyaDataPoints = [];
-        
-        // Global references for UI elements (initialized inside window.onload)
-        let sharkSelect;
-        let locationSwitch;
-        let sharkInfo;
-        let sharkLocation;
-        let trackSharkBtn;
-        let dataStatusElement;
-
-
-        // Sample data for sharks with a unique color for each
-        const sharks = [
-            { id: MONOUFYA_SHARK_ID, name: 'Monoufya Shark (Live)', type: 'data', color: '#fcd34d', length: '3.0 m', weight: '350 kg', depth: 'Variable' }, // Amber
-            { id: 'shark1', name: 'Great White (Placeholder)', type: 'placeholder', live: [34.0522, -118.2437], predicted: [33.7788, -118.1923], length: '5.5 m', weight: '2,000 kg', depth: '150 m', color: '#ff6347' }, // Tomato
-            { id: 'shark2', name: 'Hammerhead (Placeholder)', type: 'placeholder', live: [25.7617, -80.1918], predicted: [26.1224, -80.1373], length: '4.0 m', weight: '500 kg', depth: '50 m', color: '#1e90ff' } // DodgerBlue
-        ];
-
-        // Global map components
-        let map;
-        let markerGroup = L.layerGroup();
-        let polylineLayer;
-
-        // --- CSV PARSING AND DATA FETCHING FUNCTIONS ---
-        
-        function parseCSV(csvString) {
-            const lines = csvString.trim().split('\n');
-            if (lines.length < 2) return [];
-
-            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-            const data = [];
-
-            for (let i = 1; i < lines.length; i++) {
-                // Regex to handle quoted values containing commas
-                const values = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-                if (!values || values.length !== headers.length) continue;
-
-                const row = {};
-                values.forEach((val, index) => {
-                    // Clean up quotes and trim
-                    row[headers[index]] = val.trim().replace(/"/g, '');
-                });
-                data.push(row);
-            }
-            return data;
-        }
-        
-        async function fetchSharkData() {
-            // Check if the user has replaced the placeholder URL
-            if (RAW_GITHUB_URL.includes("FIntrack-data")) { 
-                // Using the mock URL for now, but remind the user in the status
-                dataStatusElement.textContent = 'Using default mock URL. Replace RAW_GITHUB_URL for live data.';
-            }
-            
-            dataStatusElement.textContent = `Fetching data from remote CSV...`;
-
-            try {
-                // Use exponential backoff for fetching data
-                const maxRetries = 5;
-                let response;
-                for (let attempt = 0; attempt < maxRetries; attempt++) {
-                    response = await fetch(RAW_GITHUB_URL);
-                    if (response.ok) break;
-                    if (attempt < maxRetries - 1) {
-                        const delay = Math.pow(2, attempt) * 1000;
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                    }
-                }
-
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-
-                const csvText = await response.text();
-                const points = parseCSV(csvText);
-                
-                if (points.length === 0) throw new Error("No tracking data found or CSV is empty.");
-
-                monoufyaDataPoints = points;
-                dataStatusElement.textContent = `Live data loaded. Total points: ${points.length}. Last updated: ${new Date().toLocaleTimeString()}`;
-                return true;
-
-            } catch (error) {
-                console.error("Failed to fetch or process data:", error);
-                monoufyaDataPoints = []; // Clear old data on error
-                dataStatusElement.textContent = `Error: Failed to fetch live data! (${new Date().toLocaleTimeString()})`;
-                return false;
-            }
-        }
-        
-        // --- MAP AND UI LOGIC ---
-
-        function createFishIcon(color, className = 'live-marker') {
-            return L.divIcon({
-                className: className,
-                iconSize: [20, 20],
-                iconAnchor: [10, 10],
-                popupAnchor: [0, -10]
-            });
-        }
-
-        function clearMapLayers() {
-            markerGroup.clearLayers();
-            if (polylineLayer) {
-                map.removeLayer(polylineLayer);
-                polylineLayer = null;
-            }
-        }
-
-        async function updateMap() {
-            clearMapLayers();
-            
-            const locationType = locationSwitch.checked ? 'predicted' : 'live';
-            const selectedSharkId = sharkSelect.value;
-            const selectedShark = sharks.find(s => s.id === selectedSharkId);
-            
-            if (!selectedShark) {
-                // Display general info if no shark is selected
-                sharkInfo.innerHTML = `<p class="text-gray-400">Select a shark to view its details.</p>`;
-                sharkLocation.innerHTML = `<p class="text-gray-400">Location data will be displayed here.</p>`;
-                map.setView(INITIAL_VIEW, 2);
-                return;
-            }
-            
-            // Update static info card
-            sharkInfo.innerHTML = `
-                <ul class="space-y-2">
-                    <li><strong class="text-blue-200">Name:</strong> ${selectedShark.name}</li>
-                    <li><strong class="text-blue-200">Length:</strong> ${selectedShark.length}</li>
-                    <li><strong class="text-blue-200">Weight:</strong> ${selectedShark.weight}</li>
-                    <li><strong class="text-blue-200">Max Depth:</strong> ${selectedShark.depth}</li>
-                </ul>
-            `;
-            
-            if (selectedShark.type === 'data') {
-                // === LIVE DATA LOGIC (MONOUFYA SHARK) ===
-                const dataReady = await fetchSharkData();
-                if (!dataReady || monoufyaDataPoints.length === 0) return;
-
-                const pathCoordinates = monoufyaDataPoints.map(p => [
-                    parseFloat(p['Latitude']), 
-                    parseFloat(p['Longitude'])
-                ]).filter(coords => !isNaN(coords[0]) && !isNaN(coords[1])); // Filter out invalid coordinates
-                
-                if (pathCoordinates.length === 0) return;
-
-                const latestCoords = pathCoordinates[pathCoordinates.length - 1];
-                const latestPoint = monoufyaDataPoints[monoufyaDataPoints.length - 1];
-                
-                // 1. Plot the path (Polyline)
-                polylineLayer = L.polyline(pathCoordinates, { 
-                    color: selectedShark.color, 
-                    weight: 3, 
-                    opacity: 0.7 
-                }).addTo(map);
-
-                // 2. Plot the latest point marker
-                const diet = latestPoint['Detected Diet'] || 'N/A';
-                // Check for specific "eating" indicators in the data
-                const isEating = diet !== 'N/A' && diet !== 'No Event Detected' && diet.toLowerCase().includes('feeding'); 
-                
-                const latestIcon = createFishIcon(selectedShark.color, isEating ? 'eating-marker' : 'live-marker');
-                
-                const marker = L.marker(latestCoords, { icon: latestIcon }).addTo(markerGroup);
-
-                // 3. Update the dynamic location card
-                sharkLocation.innerHTML = `
-                    <ul class="space-y-2">
-                        <li><strong class="text-blue-200">Time:</strong> ${latestPoint['Timestamp']}</li>
-                        <li><strong class="text-blue-200">Lat, Lon:</strong> ${latestCoords[0].toFixed(6)}, ${latestCoords[1].toFixed(6)}</li>
-                        <li><strong class="text-blue-200">Depth:</strong> ${parseFloat(latestPoint['Depth (m)'] || 0).toFixed(1)} m</li>
-                        <li><strong class="text-blue-200">Activity:</strong> ${diet}</li>
-                        <li><strong class="text-blue-200">Accel Mag:</strong> ${parseFloat(latestPoint['Accel Mag (g)'] || 0).toFixed(3)} g</li>
-                    </ul>
-                `;
-
-                marker.bindPopup(`
-                    <b>Monoufya Shark (Latest)</b><br>
-                    Time: ${latestPoint['Timestamp']}<br>
-                    Activity: ${diet}
-                `).openPopup();
-                
-                // If it's the first load for this shark, zoom to it
-                if (sharkSelect.value === MONOUFYA_SHARK_ID) {
-                    map.flyTo(latestCoords, 6); // Zoom level 6 is good for global/large area
-                }
-                
-            } else {
-                // === PLACEHOLDER DATA LOGIC (Existing code for other sharks) ===
-                const coordinates = selectedShark[locationType];
-                const sharkIcon = createFishIcon(selectedShark.color, 'live-marker');
-                const marker = L.marker(coordinates, {icon: sharkIcon}).addTo(markerGroup);
-                
-                sharkLocation.innerHTML = `
-                    <ul class="space-y-2">
-                        <li><strong class="text-blue-200">Type:</strong> ${locationType}</li>
-                        <li><strong class="text-blue-200">Latitude:</strong> ${coordinates[0].toFixed(4)}</li>
-                        <li><strong class="text-blue-200">Longitude:</strong> ${coordinates[1].toFixed(4)}</li>
-                    </ul>
-                `;
-                
-                marker.bindPopup(`<b>${selectedShark.name}</b><br>Coordinates: ${coordinates[0].toFixed(4)}, ${coordinates[1].toFixed(4)}`);
-            }
-        }
-
-        function zoomToShark() {
-            const selectedSharkId = sharkSelect.value;
-            if (selectedSharkId) {
-                const selectedShark = sharks.find(s => s.id === selectedSharkId);
-                let coordinates;
-
-                if (selectedShark.type === 'data' && monoufyaDataPoints.length > 0) {
-                    // Zoom to the latest live data point
-                    const latestPoint = monoufyaDataPoints[monoufyaDataPoints.length - 1];
-                    coordinates = [parseFloat(latestPoint['Latitude']), parseFloat(latestPoint['Longitude'])];
-                    map.flyTo(coordinates, 6);
-                } else if (selectedShark.type === 'placeholder') {
-                    // Zoom to placeholder data
-                    const locationType = locationSwitch.checked ? 'predicted' : 'live';
-                    coordinates = selectedShark[locationType];
-                    map.flyTo(coordinates, 6);
-                }
-            } else {
-                map.flyTo(INITIAL_VIEW, 2);
-            }
-        }
-
         // Vanta.js background effect
         VANTA.WAVES({
             el: "body",
@@ -452,48 +231,125 @@
             });
         }
 
-        // Initialize the map and UI elements once the DOM is ready
-        window.onload = function() {
-            // Assign UI elements here, guaranteeing they exist
-            sharkSelect = document.getElementById('shark-select');
-            locationSwitch = document.getElementById('location-switch');
-            sharkInfo = document.getElementById('shark-info');
-            sharkLocation = document.getElementById('shark-location');
-            trackSharkBtn = document.getElementById('track-shark-btn');
-            dataStatusElement = document.getElementById('data-status');
-            
-            const mapElement = document.getElementById('map');
-            
-            if (mapElement) {
-                map = L.map('map').setView(INITIAL_VIEW, 2);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(map);
-                
-                markerGroup.addTo(map); // Add marker group to map
+        // --- Map Script ---
+        const sharkSelect = document.getElementById('shark-select');
+        const locationSwitch = document.getElementById('location-switch');
+        const sharkInfo = document.getElementById('shark-info');
+        const sharkLocation = document.getElementById('shark-location');
+        const trackSharkBtn = document.getElementById('track-shark-btn');
 
-                // Populate the dropdown menu
-                sharks.forEach(shark => {
-                    const option = document.createElement('option');
-                    option.value = shark.id;
-                    option.textContent = shark.name;
-                    sharkSelect.appendChild(option);
+        // Sample data for sharks with a unique color for each
+        const sharks = [
+            { id: 'shark1', name: 'Great White', live: [86.0522, -118.2437], predicted: [64, -118.1923], length: '5.5 m', weight: '2,000 kg', depth: '150 m', color: '#ff6347' }, // Tomato
+            { id: 'shark2', name: 'Hammerhead', live: [25.7617, -80.1918], predicted: [26.1224, -80.1373], length: '4.0 m', weight: '500 kg', depth: '50 m', color: '#1e90ff' }, // DodgerBlue
+            { id: 'shark3', name: 'Tiger Shark', live: [21.3099, -157.8581], predicted: [21.4389, -157.9944], length: '4.5 m', weight: '600 kg', depth: '75 m', color: '#3cb371' } // MediumSeaGreen
+        ];
+
+        // Custom function to create a more realistic fish-shaped icon with a specific color
+        function createFishIcon(color) {
+            const svg = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50">
+                    <path d="M95 25 C80 40, 50 45, 30 40 C 10 35, 5 30, 5 25 C 5 20, 10 15, 30 10 C 50 5, 80 10, 95 25 Z M 5 25 Q 0 35, -10 25 Q 0 15, 5 25 Z" fill="${color}" stroke="${color}" stroke-width="2"/>
+                </svg>
+            `;
+            const svgUrl = 'data:image/svg+xml;base64,' + btoa(svg);
+            return L.icon({
+                iconUrl: svgUrl,
+                iconSize: [60, 30],
+                iconAnchor: [30, 15],
+                popupAnchor: [0, -15]
+            });
+        }
+
+        // Initialize the map
+        const map = L.map('map').setView([0, 0], 2);
+        map.invalidateSize();
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        let currentMarkers = [];
+
+        function displaySharkDetails(shark) {
+            const locationType = locationSwitch.checked ? 'predicted' : 'live';
+            const coordinates = shark[locationType];
+
+            sharkInfo.innerHTML = `
+                <ul class="space-y-2">
+                    <li><strong class="text-blue-200">Name:</strong> ${shark.name}</li>
+                    <li><strong class="text-blue-200">Length:</strong> ${shark.length}</li>
+                    <li><strong class="text-blue-200">Weight:</strong> ${shark.weight}</li>
+                    <li><strong class="text-blue-200">Max Depth:</strong> ${shark.depth}</li>
+                </ul>
+            `;
+            sharkLocation.innerHTML = `
+                <ul class="space-y-2">
+                    <li><strong class="text-blue-200">Latitude:</strong> ${coordinates[0].toFixed(4)}</li>
+                    <li><strong class="text-blue-200">Longitude:</strong> ${coordinates[1].toFixed(4)}</li>
+                </ul>
+            `;
+        }
+
+        function updateUI() {
+            // Clear existing markers
+            currentMarkers.forEach(marker => map.removeLayer(marker));
+            currentMarkers = [];
+
+            const locationType = locationSwitch.checked ? 'predicted' : 'live';
+            const selectedSharkId = sharkSelect.value;
+
+            // Add new markers for all sharks using a unique fish icon for each
+            sharks.forEach(shark => {
+                const coordinates = shark[locationType];
+                const sharkIcon = createFishIcon(shark.color);
+                const marker = L.marker(coordinates, {icon: sharkIcon}).addTo(map)
+                    .bindPopup(`<b>${shark.name}</b><br>Coordinates: ${coordinates[0].toFixed(4)}, ${coordinates[1].toFixed(4)}`);
+                currentMarkers.push(marker);
+            });
+
+            if (selectedSharkId) {
+                const selectedShark = sharks.find(s => s.id === selectedSharkId);
+                displaySharkDetails(selectedShark);
+            } else {
+                sharkInfo.innerHTML = `<p class="text-gray-400">Select a shark to view its details.</p>`;
+                sharkLocation.innerHTML = `<p class="text-gray-400">Location data will be displayed here.</p>`;
+            }
+        }
+
+        // Populate the dropdown menu
+        sharks.forEach(shark => {
+            const option = document.createElement('option');
+            option.value = shark.id;
+            option.textContent = shark.name;
+            sharkSelect.appendChild(option);
+        });
+
+        // Event Listeners
+        sharkSelect.addEventListener('change', updateUI);
+        locationSwitch.addEventListener('change', updateUI);
+
+        trackSharkBtn.addEventListener('click', () => {
+            const selectedSharkId = sharkSelect.value;
+            if (selectedSharkId) {
+                const locationType = locationSwitch.checked ? 'predicted' : 'live';
+                const selectedShark = sharks.find(s => s.id === selectedSharkId);
+                const coordinates = selectedShark[locationType];
+
+                const marker = currentMarkers.find(m => {
+                    const latLng = m.getLatLng();
+                    return Math.abs(latLng.lat - coordinates[0]) < 0.0001 && Math.abs(latLng.lng - coordinates[1]) < 0.0001;
                 });
 
-                // Set Monoufya Shark as the default selection and load its data
-                sharkSelect.value = MONOUFYA_SHARK_ID;
-                // Call updateMap() to fetch the CSV data and plot the Monoufya shark
-                updateMap(); 
-                
-                // Set up auto-refresh for the live data
-                setInterval(updateMap, 60000); // Refresh every 60 seconds
+                if (marker) {
+                    marker.openPopup();
+                    map.flyTo(coordinates, 6);
+                }
             }
+        });
 
-            // Event Listeners
-            if (sharkSelect) sharkSelect.addEventListener('change', updateMap);
-            if (locationSwitch) locationSwitch.addEventListener('change', updateMap);
-            if (trackSharkBtn) trackSharkBtn.addEventListener('click', zoomToShark);
-        };
+        // Initial setup
+        updateUI();
     </script>
 </body>
 </html>
